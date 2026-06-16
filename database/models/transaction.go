@@ -3,10 +3,10 @@ package models
 import "time"
 
 type Transaction struct {
-	PK                      string    `dynamodbav:"PK"`
-	SK                      string    `dynamodbav:"SK"`
-	GSI1PK                  string    `dynamodbav:"GSI1PK"`
-	GSI1SK                  string    `dynamodbav:"GSI1SK"`
+	PK                      string    `dynamodbav:"PK"`     // ACCOUNT#<account_id>
+	SK                      string    `dynamodbav:"SK"`     // TXN#<transaction_id>
+	GSI1PK                  string    `dynamodbav:"GSI1PK"` // USER#<user_id>
+	GSI1SK                  string    `dynamodbav:"GSI1SK"` // TXN#<transaction_id>
 	TTL                     time.Time `dynamodbav:"ttl"`
 	ID                      string    `dynamodbav:"id"`
 	AccountID               string    `dynamodbav:"account_id"`
