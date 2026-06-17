@@ -104,3 +104,124 @@ func (plaidRepository *PlaidRepository) ListTransactionsByUserID(ctx context.Con
 
 	return transactions, nil
 }
+
+func (plaidRepository *PlaidRepository) CreateItem(ctx context.Context, itm models.Item) error {
+	op := "CreateItem"
+
+	itm.CreatedAt = time.Now()
+	itm.UpdatedAt = time.Now()
+
+	item, err := attributevalue.MarshalMap(itm)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	_, err = plaidRepository.Client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(plaidRepository.TableName), Item: item,
+	})
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (plaidRepository *PlaidRepository) UpdateItemCursor(ctx context.Context, itm models.Item) error {
+	op := "UpdateItem"
+
+	key, err := itm.MarshalKey()
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	updateExpr := expression.Set(
+		expression.Name("cursor"),
+		expression.Value(itm.Cursor),
+	).Set(
+		expression.Name("updated_at"),
+		expression.Value(time.Now()),
+	)
+
+	expr, err := expression.NewBuilder().WithUpdate(updateExpr).Build()
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	input := &dynamodb.UpdateItemInput{
+		TableName:                 aws.String(plaidRepository.TableName),
+		Key:                       key,
+		UpdateExpression:          expr.Update(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		ReturnValues:              types.ReturnValueUpdatedNew,
+	}
+
+	_, err = plaidRepository.Client.UpdateItem(ctx, input)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (plaidRepository *PlaidRepository) ListItemsByUserID(ctx context.Context, userID string) ([]models.Item, error) {
+	op := "ListItemsByUserID"
+	keyEx := expression.Key("PK").Equal(expression.Value("USER#" + userID))
+
+	expr, err := expression.NewBuilder().
+		WithKeyCondition(keyEx).
+		Build()
+	if err != nil {
+		return []models.Item{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	var items []models.Item
+	paginator := dynamodb.NewQueryPaginator(plaidRepository.Client, &dynamodb.QueryInput{
+		TableName:                 plaidRepository.TableName,
+		IndexName:                 aws.String("PK"),
+		KeyConditionExpression:    expr.KeyCondition(),
+		FilterExpression:          expr.Filter(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+	})
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return []models.Item{}, fmt.Errorf("%s: %w", op, err)
+		}
+		var page_items []models.Item
+		if err := attributevalue.UnmarshalListOfMaps(page.Items, &page_items); err != nil {
+			return []models.Item{}, fmt.Errorf("%s: %w", op, err)
+		}
+		items = append(items, page_items...)
+	}
+
+	return items, nil
+
+}
+
+func (plaidRepository *PlaidRepository) CreateAccount(ctx context.Context, account models.Account) error {
+	op := "CreateAccount"
+
+	item, err := attributevalue.MarshalMap(account)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	_, err = plaidRepository.Client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(plaidRepository.TableName), Item: item,
+	})
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	if len(account.Transactions) > 0 {
+		err = plaidRepository.BulkCreateTransactions(ctx, account.Transactions)
+		if err != nil {
+			return fmt.Errorf("%s: %w", op, err)
+		}
+	}
+
+	return nil
+}

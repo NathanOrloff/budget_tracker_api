@@ -1,6 +1,11 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
 
 type Transaction struct {
 	PK                      string    `dynamodbav:"PK"`     // ACCOUNT#<account_id>
@@ -17,4 +22,19 @@ type Transaction struct {
 	PersonalFinanceCategory string    `dynamodbav:"personal_finance_category"`
 	CreatedAt               time.Time `dynamodbav:"created_at"`
 	UpdatedAt               time.Time `dynamodbav:"updated_at"`
+}
+
+func (transaction *Transaction) MarshalKey() (map[string]types.AttributeValue, error) {
+	key := struct {
+		PK     string
+		SK     string
+		GSI1PK string
+		GSI1SK string
+	}{
+		PK:     transaction.PK,
+		SK:     transaction.SK,
+		GSI1PK: transaction.GSI1PK,
+		GSI1SK: transaction.GSI1SK,
+	}
+	return attributevalue.MarshalMap(key)
 }
