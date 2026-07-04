@@ -1,8 +1,11 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	"budget_tracket/utils"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -60,17 +63,24 @@ func MarshalTransaction(plaidTransaction plaid.Transaction) (Transaction, error)
 	}, nil
 }
 
-func (transaction *Transaction) MarshalKey() (map[string]types.AttributeValue, error) {
+func (t *Transaction) FillKey(ctx context.Context) {
+	t.PK = "ACCOUNT#" + t.AccountID
+	t.SK = "TXN#" + t.ID
+	t.GSI1PK = "USER#" + utils.GetUIDFromCtx(ctx)
+	t.GSI1SK = "TXN#" + t.ID
+}
+
+func (t *Transaction) MarshalKey() (map[string]types.AttributeValue, error) {
 	key := struct {
 		PK     string
 		SK     string
 		GSI1PK string
 		GSI1SK string
 	}{
-		PK:     transaction.PK,
-		SK:     transaction.SK,
-		GSI1PK: transaction.GSI1PK,
-		GSI1SK: transaction.GSI1SK,
+		PK:     t.PK,
+		SK:     t.SK,
+		GSI1PK: t.GSI1PK,
+		GSI1SK: t.GSI1SK,
 	}
 	return attributevalue.MarshalMap(key)
 }

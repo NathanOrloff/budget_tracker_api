@@ -41,6 +41,9 @@ func (plaidRepository *PlaidRepository) BulkCreateTransactions(ctx context.Conte
 			end = len(transactions)
 		}
 		for _, transaction := range transactions[start:end] {
+			transaction.FillKey(ctx)
+			transaction.CreatedAt = time.Now()
+			transaction.UpdatedAt = time.Now()
 			item, err := attributevalue.MarshalMap(transaction)
 			if err != nil {
 				return fmt.Errorf("%s: %w", op, err)
