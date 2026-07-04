@@ -1,6 +1,7 @@
 package client
 
 import (
+	"budget_tracket/constants"
 	"budget_tracket/database/models"
 	"context"
 	"fmt"
@@ -16,9 +17,9 @@ type PlaidClient struct {
 
 func NewPlaidClient() *PlaidClient {
 	config := plaid.NewConfiguration()
-	config.Host = os.Getenv("PLAID_ENV")
-	config.AddDefaultHeader("PLAID-CLIENT-ID", os.Getenv("PLAID_CLIENT_ID"))
-	config.AddDefaultHeader("PLAID-SECRET", os.Getenv("PLAID_SECRET"))
+	config.Host = os.Getenv(constants.PLAID_ENV)
+	config.AddDefaultHeader(constants.HEADER_CLIENT_ID, os.Getenv(constants.PLAID_CLIENT_ID))
+	config.AddDefaultHeader(constants.HEADER_SECRET, os.Getenv(constants.PLAID_SECRET))
 
 	client := PlaidClient{
 		Client: plaid.NewAPIClient(config),
@@ -30,7 +31,7 @@ func (p *PlaidClient) CreateLinkToken(ctx context.Context, userID string) (strin
 	op := "CreateLinkToken"
 
 	countryCodes := getCountryCodes()
-	redirectUri := os.Getenv("PLAID_REDIRECT_URI")
+	redirectUri := os.Getenv(constants.PLAID_REDIRECT_URI)
 	products := getPlaidProducts()
 
 	user := plaid.LinkTokenCreateRequestUser{
@@ -131,7 +132,7 @@ func marshalTransactions(plaidTransactions []plaid.Transaction) ([]models.Transa
 func getCountryCodes() []plaid.CountryCode {
 	countryCodes := []plaid.CountryCode{}
 
-	countryCodeStrs := strings.Split(os.Getenv("PLAID_COUNTRY_CODES"), ",")
+	countryCodeStrs := strings.Split(os.Getenv(constants.PLAID_COUNTRY_CODES), ",")
 	for _, countryCodeStr := range countryCodeStrs {
 		countryCodes = append(countryCodes, plaid.CountryCode(countryCodeStr))
 	}
@@ -142,7 +143,7 @@ func getCountryCodes() []plaid.CountryCode {
 func getPlaidProducts() []plaid.Products {
 	plaidProducts := []plaid.Products{}
 
-	products := strings.Split(os.Getenv("PLAID_PRODUCTS"), ",")
+	products := strings.Split(os.Getenv(constants.PLAID_PRODUCTS), ",")
 	for _, product := range products {
 		plaidProducts = append(plaidProducts, plaid.Product(product))
 	}
