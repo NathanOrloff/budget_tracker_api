@@ -27,7 +27,7 @@ type Transaction struct {
 	UpdatedAt               time.Time `dynamodbav:"updated_at"`
 }
 
-func Marshal(plaidTransaction plaid.Transaction) (Transaction, error) {
+func MarshalTransaction(plaidTransaction plaid.Transaction) (Transaction, error) {
 	op := "Marshal"
 
 	pfc := ""

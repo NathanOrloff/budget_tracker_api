@@ -87,15 +87,28 @@ func (p *PlaidClient) SyncTransactions(ctx context.Context, accessToken string, 
 
 		resp, _, err := p.Client.PlaidApi.TransactionsSync(ctx).TransactionsSyncRequest(*request).Execute()
 		if err != nil {
-			return []models.Transaction{}, []models.Transaction{}, []models.Transaction{}, nil, fmt.Errorf("%s: %w", op, err)
+			return nil, nil, nil, nil, fmt.Errorf("%s: %w", op, err)
 		}
 
 		nextCursor := resp.GetNextCursor()
 		cursor = &nextCursor
 
-		added = append(added, marshallTransactions(resp.GetAdded())...)
-		modified = append(modified, marshallTransactions(resp.GetModified())...)
-		removed = append(removed, marshallTransactions(resp.GetRemoved())...)
+		addedBatch, err := marshalTransactions(resp.GetAdded())
+		if err != nil {
+			return nil, nil, nil, nil, fmt.Errorf("%s: %w", op, err)
+		}
+		added = append(added, addedBatch...)
+
+		modifiedBatch, err := marshalTransactions(resp.GetModified())
+		if err != nil {
+			return nil, nil, nil, nil, fmt.Errorf("%s: %w", op, err)
+		}
+		modified = append(modified, modifiedBatch...)
+
+		for _, r := range resp.GetRemoved() {
+			removed = append(removed, models.Transaction{ID: r.GetTransactionId()})
+		}
+
 		hasMore = resp.GetHasMore()
 	}
 
@@ -106,7 +119,7 @@ func marshalTransactions(plaidTransactions []plaid.Transaction) ([]models.Transa
 	op := "marshalTransactions"
 	var transactions []models.Transaction
 	for _, trans := range plaidTransactions {
-		transaction, err := models.Transaction.Marshal(trans)
+		transaction, err := models.MarshalTransaction(trans)
 		if err != nil {
 			return []models.Transaction{}, fmt.Errorf("%s: %w", op, err)
 		}
