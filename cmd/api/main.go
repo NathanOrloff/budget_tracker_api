@@ -1,18 +1,33 @@
 package main
 
 import (
+	"budget_tracket/handler"
 	"context"
-	"encoding/json"
-	"log"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
+	"github.com/gin-gonic/gin"
 )
 
-func handleRequest(ctx context.Context, event json.RawMessage) error {
-	log.Printf("Hello, World!")
-	return nil
+var ginLambda *ginadapter.GinLambda
+
+func init() {
+
+	_, err := handler.NewAppHandler()
+	if err != nil {
+		return
+	}
+
+	r := gin.Default()
+
+	ginLambda = ginadapter.New(r)
+}
+
+func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	return ginLambda.ProxyWithContext(ctx, req)
 }
 
 func main() {
-	lambda.Start(handleRequest)
+	lambda.Start(Handler)
 }

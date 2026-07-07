@@ -19,14 +19,19 @@ type PlaidRepository struct {
 	TableName string
 }
 
-func NewPlaidClient(ctx context.Context, profile string) (*dynamodb.Client, error) {
-	cfg, err := config.LoadDefaultConfig(ctx)
+func NewPlaidRepository(tableName string) (*PlaidRepository, error) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
 	}
 
 	client := dynamodb.NewFromConfig(cfg)
-	return client, nil
+
+	repo := PlaidRepository{
+		Client:    client,
+		TableName: tableName,
+	}
+	return &repo, nil
 }
 
 func (plaidRepository *PlaidRepository) BulkCreateTransactions(ctx context.Context, transactions []models.Transaction) error {
@@ -85,7 +90,7 @@ func (plaidRepository *PlaidRepository) ListTransactionsByUserID(ctx context.Con
 
 	var transactions []models.Transaction
 	paginator := dynamodb.NewQueryPaginator(plaidRepository.Client, &dynamodb.QueryInput{
-		TableName:                 plaidRepository.TableName,
+		TableName:                 &plaidRepository.TableName,
 		IndexName:                 aws.String("GSI1"),
 		KeyConditionExpression:    expr.KeyCondition(),
 		FilterExpression:          expr.Filter(),
@@ -180,7 +185,7 @@ func (plaidRepository *PlaidRepository) ListItemsByUserID(ctx context.Context, u
 
 	var items []models.Item
 	paginator := dynamodb.NewQueryPaginator(plaidRepository.Client, &dynamodb.QueryInput{
-		TableName:                 plaidRepository.TableName,
+		TableName:                 &plaidRepository.TableName,
 		IndexName:                 aws.String("PK"),
 		KeyConditionExpression:    expr.KeyCondition(),
 		FilterExpression:          expr.Filter(),

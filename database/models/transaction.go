@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	plaid "github.com/plaid/plaid-go"
+	"github.com/plaid/plaid-go/v3/plaid"
 )
 
 type Transaction struct {

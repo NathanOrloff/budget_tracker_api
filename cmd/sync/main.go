@@ -1,15 +1,22 @@
 package main
 
 import (
+	"budget_tracket/handler"
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
 func handleRequest(ctx context.Context, event json.RawMessage) error {
-	log.Printf("Hello, World!")
+	op := "handleRequest"
+
+	_, err := handler.NewSyncHandler()
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
 	return nil
 }
 

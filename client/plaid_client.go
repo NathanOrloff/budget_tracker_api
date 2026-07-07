@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	plaid "github.com/plaid/plaid-go"
+	"github.com/plaid/plaid-go/v3/plaid"
 )
 
 type PlaidClient struct {
@@ -145,7 +145,7 @@ func getPlaidProducts() []plaid.Products {
 
 	products := strings.Split(os.Getenv(constants.PLAID_PRODUCTS), ",")
 	for _, product := range products {
-		plaidProducts = append(plaidProducts, plaid.Product(product))
+		plaidProducts = append(plaidProducts, plaid.Products(product))
 	}
 
 	return plaidProducts
