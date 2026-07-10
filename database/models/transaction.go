@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"budget_tracket/constants"
 	"budget_tracket/utils"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -68,6 +69,7 @@ func (t *Transaction) FillKey(ctx context.Context) {
 	t.SK = "TXN#" + t.ID
 	t.GSI1PK = "USER#" + utils.GetUIDFromCtx(ctx)
 	t.GSI1SK = "TXN#" + t.ID
+	t.TTL = time.Now().Unix() + constants.ONE_YEAR
 }
 
 func (t *Transaction) MarshalKey() (map[string]types.AttributeValue, error) {

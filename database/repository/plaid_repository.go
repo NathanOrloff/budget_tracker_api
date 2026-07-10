@@ -172,6 +172,44 @@ func (plaidRepository *PlaidRepository) UpdateItemCursor(ctx context.Context, it
 	return nil
 }
 
+func (plaidRepository *PlaidRepository) ListAllItems(ctx context.Context) ([]models.Item, error) {
+	op := "ListAllItems"
+	keyEx := expression.Name("SK").BeginsWith("ITEM#")
+	expr, err := expression.NewBuilder().WithFilter(keyEx).Build()
+	if err != nil {
+		return []models.Item{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	var items []models.Item
+	var lastEvaluatedKey map[string]types.AttributeValue
+
+	for {
+		out, err := plaidRepository.Client.Scan(ctx, &dynamodb.ScanInput{
+			TableName:                 aws.String(plaidRepository.TableName),
+			FilterExpression:          expr.Filter(),
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+		})
+		if err != nil {
+			return []models.Item{}, fmt.Errorf("%s: %w", op, err)
+		}
+
+		var page []models.Item
+		if err = attributevalue.UnmarshalListOfMaps(out.Items, &page); err != nil {
+			return []models.Item{}, fmt.Errorf("%s: %w", op, err)
+		}
+
+		items = append(items, page...)
+
+		lastEvaluatedKey = out.LastEvaluatedKey
+		if lastEvaluatedKey == nil {
+			break
+		}
+	}
+
+	return items, nil
+}
+
 func (plaidRepository *PlaidRepository) ListItemsByUserID(ctx context.Context, userID string) ([]models.Item, error) {
 	op := "ListItemsByUserID"
 	keyEx := expression.Key("PK").Equal(expression.Value("USER#" + userID))

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"budget_tracket/service"
+	"context"
 	"fmt"
 )
 
@@ -22,4 +23,15 @@ func NewSyncHandler() (*SyncHandler, error) {
 	}
 
 	return &handler, nil
+}
+
+func (s *SyncHandler) SyncTransactions(ctx context.Context) error {
+	op := "SyncTransactions"
+
+	err := s.syncService.SyncTransactions(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }

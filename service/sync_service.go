@@ -4,6 +4,7 @@ import (
 	"budget_tracket/client"
 	"budget_tracket/constants"
 	"budget_tracket/database/repository"
+	"context"
 	"fmt"
 	"os"
 )
@@ -27,4 +28,36 @@ func NewSyncService() (*SyncService, error) {
 	}
 
 	return &service, nil
+}
+
+func (s *SyncService) SyncTransactions(ctx context.Context) error {
+	op := "SyncTransactions"
+
+	items, err := s.plaidRepository.ListAllItems(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	for _, item := range items {
+		added, _, _, cursor, err := s.plaidClient.SyncTransactions(ctx, item.AccessToken, item.Cursor)
+		if err != nil {
+			return fmt.Errorf("%s: %w", op, err)
+		}
+
+		item.Cursor = cursor
+		err = s.plaidRepository.UpdateItemCursor(ctx, item)
+		if err != nil {
+			return fmt.Errorf("%s: %w", op, err)
+		}
+
+		if len(added) > 0 {
+			err = s.plaidRepository.BulkCreateTransactions(ctx, added)
+			if err != nil {
+				return fmt.Errorf("%s: %w", op, err)
+			}
+		}
+
+	}
+
+	return nil
 }

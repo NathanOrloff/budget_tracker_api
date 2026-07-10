@@ -12,10 +12,12 @@ import (
 func handleRequest(ctx context.Context, event json.RawMessage) error {
 	op := "handleRequest"
 
-	_, err := handler.NewSyncHandler()
+	handler, err := handler.NewSyncHandler()
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
+
+	handler.SyncTransactions(ctx)
 
 	return nil
 }
