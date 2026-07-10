@@ -1,13 +1,18 @@
 package service
 
 import (
+	"budget_tracket/client"
 	"budget_tracket/constants"
+	"budget_tracket/database/models"
 	"budget_tracket/database/repository"
+	"budget_tracket/utils"
+	"context"
 	"fmt"
 	"os"
 )
 
 type AppService struct {
+	plaidClient     *client.PlaidClient
 	plaidRepository *repository.PlaidRepository
 }
 
@@ -21,7 +26,55 @@ func NewAppService() (*AppService, error) {
 
 	service := AppService{
 		plaidRepository: plaidRepsitory,
+		plaidClient:     client.NewPlaidClient(),
 	}
 
 	return &service, nil
+}
+
+func (a *AppService) CreateLinkToken(ctx context.Context) (string, error) {
+	op := "CreateLinkToken"
+
+	userID := utils.GetUIDFromCtx(ctx)
+	if userID == "" {
+		return "", fmt.Errorf("%s: Invalid userID", op)
+	}
+
+	token, err := a.plaidClient.CreateLinkToken(ctx, userID)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return token, nil
+}
+
+func (a *AppService) ExchangePublicToken(ctx context.Context, publicToken string, institution_name string) error {
+	op := "ExchangePublicToken"
+
+	token, itemID, err := a.plaidClient.ExchangePublicToken(ctx, publicToken)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	userID := utils.GetUIDFromCtx(ctx)
+	if userID == "" {
+		return fmt.Errorf("%s: Invalid userID", op)
+	}
+
+	newItem := models.Item{
+		PK:              "USER#" + userID,
+		SK:              "ITEM#" + itemID,
+		ID:              itemID,
+		UserID:          userID,
+		AccessToken:     token,
+		Cursor:          nil,
+		InstitutionName: institution_name,
+	}
+
+	err = a.plaidRepository.CreateItem(ctx, newItem)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
 }

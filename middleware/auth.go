@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"budget_tracket/constants"
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -53,7 +54,8 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set(constants.USER_ID_KEY, subject)
+		ctx := context.WithValue(c.Request.Context(), constants.USER_ID_KEY, subject)
+		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	}
 }

@@ -15,13 +15,16 @@ var ginLambda *ginadapter.GinLambda
 
 func init() {
 
-	_, err := handler.NewAppHandler()
+	handler, err := handler.NewAppHandler()
 	if err != nil {
 		return
 	}
 
 	r := gin.Default()
 	r.Use(middleware.AuthMiddleware())
+
+	r.GET("/create-link-token", handler.CreateLinkToken)
+	r.POST("/exchange-public-token", handler.ExchangePublicToken)
 
 	ginLambda = ginadapter.New(r)
 }
