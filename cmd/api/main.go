@@ -2,6 +2,7 @@ package main
 
 import (
 	"budget_tracket/handler"
+	"budget_tracket/middleware"
 	"context"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -20,6 +21,7 @@ func init() {
 	}
 
 	r := gin.Default()
+	r.Use(middleware.AuthMiddleware())
 
 	ginLambda = ginadapter.New(r)
 }
