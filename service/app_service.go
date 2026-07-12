@@ -5,10 +5,12 @@ import (
 	"budget_tracket/constants"
 	"budget_tracket/database/models"
 	"budget_tracket/database/repository"
+	"budget_tracket/frontend"
 	"budget_tracket/utils"
 	"context"
 	"fmt"
 	"os"
+	"time"
 )
 
 type AppService struct {
@@ -77,4 +79,27 @@ func (a *AppService) ExchangePublicToken(ctx context.Context, publicToken string
 	}
 
 	return nil
+}
+
+func (a *AppService) ListTransactionsSinceDate(ctx context.Context, fromDate time.Time) ([]frontend.TransactionOutput, error) {
+	op := "ListTransactionsSinceDate"
+
+	userID := utils.GetUIDFromCtx(ctx)
+	if userID == "" {
+		return []frontend.TransactionOutput{}, fmt.Errorf("%s: Invalid userID", op)
+	}
+
+	currentDate := time.Now()
+
+	dbTransactions, err := a.plaidRepository.ListTransactionsByUserID(ctx, userID, &fromDate, &currentDate)
+	if err != nil {
+		return []frontend.TransactionOutput{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	var transactions []frontend.TransactionOutput
+	for _, dbTransaction := range dbTransactions {
+		transactions = append(transactions, frontend.MarshalTransaction(dbTransaction))
+	}
+
+	return transactions, nil
 }

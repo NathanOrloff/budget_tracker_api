@@ -24,6 +24,8 @@ func init() {
 	r.Use(middleware.AuthMiddleware())
 
 	r.GET("/create-link-token", handler.CreateLinkToken)
+	r.GET("/transactions", handler.ListTransactionsSinceDate)
+
 	r.POST("/exchange-public-token", handler.ExchangePublicToken)
 
 	ginLambda = ginadapter.New(r)

@@ -5,6 +5,7 @@ import (
 	"budget_tracket/service"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -67,4 +68,30 @@ func (a *AppHandler) ExchangePublicToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{})
+}
+
+func (a *AppHandler) ListTransactionsSinceDate(c *gin.Context) {
+	op := "ListTransactionsSinceDate"
+	ctx := c.Request.Context()
+
+	fromDateInput := c.Param("from_date")
+	fromDate, err := time.Parse("2006-01-02", fromDateInput)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Errorf("%s: %w", op, err),
+		})
+		return
+	}
+
+	transactions, err := a.appService.ListTransactionsSinceDate(ctx, fromDate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Errorf("%s: %w", op, err),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": transactions,
+	})
 }
