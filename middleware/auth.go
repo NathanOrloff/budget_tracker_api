@@ -3,58 +3,20 @@ package middleware
 import (
 	"budget_tracket/constants"
 	"context"
-	"fmt"
-	"net/http"
-	"os"
-	"strings"
 
-	"github.com/MicahParks/keyfunc/v3"
+	"github.com/awslabs/aws-lambda-go-api-proxy/core"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
-	region := os.Getenv(constants.ENV_REGION)
-	userPoolID := os.Getenv(constants.ENV_USER_POOL_ID)
-
-	jwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", region, userPoolID)
-	k, err := keyfunc.NewDefault([]string{jwksURL})
-	if err != nil {
-		panic(fmt.Sprintf("Failed to initialize JWKS keyfunc: %v", err))
-	}
-
-	unauthorizedAccessResponse := gin.H{
-		"error": "Unauthorized Access",
-	}
-
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, unauthorizedAccessResponse)
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
-		token, err := jwt.Parse(tokenString, k.Keyfunc)
-		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, unauthorizedAccessResponse)
-			return
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
+		apiGwContext, ok := core.GetAPIGatewayContextFromContext(c.Request.Context())
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, unauthorizedAccessResponse)
+			c.AbortWithStatus(401)
 			return
 		}
-
-		subject, err := claims.GetSubject()
-		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, unauthorizedAccessResponse)
-			return
-		}
-
-		ctx := context.WithValue(c.Request.Context(), constants.USER_ID_KEY, subject)
+		sub, _ := apiGwContext.Authorizer["claims"].(map[string]interface{})["sub"].(string)
+		ctx := context.WithValue(c.Request.Context(), constants.USER_ID_KEY, sub)
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	}
