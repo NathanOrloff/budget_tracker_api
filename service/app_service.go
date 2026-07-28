@@ -11,6 +11,10 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
 type AppService struct {
@@ -20,15 +24,36 @@ type AppService struct {
 
 func NewAppService() (*AppService, error) {
 	op := "NewAppService"
+	region := os.Getenv(constants.ENV_REGION)
 
-	plaidRepsitory, err := repository.NewPlaidRepository(os.Getenv(constants.PLAID_DB_NAME_KEY))
+	config, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
+	svc := secretsmanager.NewFromConfig(config)
+
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(constants.PLAID_SECRET),
+	}
+
+	result, err := svc.GetSecretValue(context.TODO(), input)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	var apiSecret string = *result.SecretString
+
+	plaidRepsitory, err := repository.NewPlaidRepository(os.Getenv(constants.PLAID_TABLE_NAME))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	plaidClient := client.NewPlaidClient(apiSecret)
+
 	service := AppService{
 		plaidRepository: plaidRepsitory,
-		plaidClient:     client.NewPlaidClient(),
+		plaidClient:     plaidClient,
 	}
 
 	return &service, nil

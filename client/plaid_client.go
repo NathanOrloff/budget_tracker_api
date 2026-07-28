@@ -15,11 +15,11 @@ type PlaidClient struct {
 	Client *plaid.APIClient
 }
 
-func NewPlaidClient() *PlaidClient {
+func NewPlaidClient(plaidSecret string) *PlaidClient {
 	config := plaid.NewConfiguration()
 	config.Host = os.Getenv(constants.PLAID_ENV)
 	config.AddDefaultHeader(constants.HEADER_CLIENT_ID, os.Getenv(constants.PLAID_CLIENT_ID))
-	config.AddDefaultHeader(constants.HEADER_SECRET, os.Getenv(constants.PLAID_SECRET))
+	config.AddDefaultHeader(constants.HEADER_SECRET, plaidSecret)
 
 	client := PlaidClient{
 		Client: plaid.NewAPIClient(config),

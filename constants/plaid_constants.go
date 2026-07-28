@@ -1,6 +1,6 @@
 package constants
 
-const APP_NAME = "Zapdos Budget Pro"
+const APP_NAME = "NCO Budget Pro"
 const LANGUAGE = "en"
 
 const PLAID_ENV = "PLAID_ENV"
