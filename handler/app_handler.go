@@ -36,7 +36,7 @@ func (a *AppHandler) CreateLinkToken(c *gin.Context) {
 	token, err := a.appService.CreateLinkToken(ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Errorf("%s: %w", op, err),
+			"error": fmt.Errorf("%s: %w", op, err).Error(),
 		})
 		return
 	}
@@ -54,7 +54,7 @@ func (a *AppHandler) ExchangePublicToken(c *gin.Context) {
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Errorf("%s: %w", op, err),
+			"error": fmt.Errorf("%s: %w", op, err).Error(),
 		})
 		return
 	}
@@ -62,7 +62,7 @@ func (a *AppHandler) ExchangePublicToken(c *gin.Context) {
 	err = a.appService.ExchangePublicToken(ctx, input.PublicToken, input.InstitutionName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Errorf("%s: %w", op, err),
+			"error": fmt.Errorf("%s: %w", op, err).Error(),
 		})
 		return
 	}
@@ -78,7 +78,7 @@ func (a *AppHandler) ListTransactionsSinceDate(c *gin.Context) {
 	fromDate, err := time.Parse("2006-01-02", fromDateInput)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": fmt.Errorf("%s: %w", op, err),
+			"error": fmt.Errorf("%s: %w", op, err).Error(),
 		})
 		return
 	}
@@ -86,7 +86,7 @@ func (a *AppHandler) ListTransactionsSinceDate(c *gin.Context) {
 	transactions, err := a.appService.ListTransactionsSinceDate(ctx, fromDate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": fmt.Errorf("%s: %w", op, err),
+			"error": fmt.Errorf("%s: %w", op, err).Error(),
 		})
 		return
 	}

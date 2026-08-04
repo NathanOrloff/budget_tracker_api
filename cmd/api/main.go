@@ -4,6 +4,7 @@ import (
 	"budget_tracket/handler"
 	"budget_tracket/middleware"
 	"context"
+	"log"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -17,7 +18,7 @@ func init() {
 
 	handler, err := handler.NewAppHandler()
 	if err != nil {
-		return
+		log.Fatalf("failed to initialize app handler: %v", err)
 	}
 
 	r := gin.Default()

@@ -17,7 +17,15 @@ type PlaidClient struct {
 
 func NewPlaidClient(plaidSecret string) *PlaidClient {
 	config := plaid.NewConfiguration()
-	config.Host = os.Getenv(constants.PLAID_ENV)
+	env := os.Getenv(constants.PLAID_ENV)
+	switch env {
+	case "sandbox":
+		config.UseEnvironment(plaid.Sandbox)
+	case "production":
+		config.UseEnvironment(plaid.Production)
+	default:
+		config.UseEnvironment(plaid.Sandbox)
+	}
 	config.AddDefaultHeader(constants.HEADER_CLIENT_ID, os.Getenv(constants.PLAID_CLIENT_ID))
 	config.AddDefaultHeader(constants.HEADER_SECRET, plaidSecret)
 
@@ -31,7 +39,7 @@ func (p *PlaidClient) CreateLinkToken(ctx context.Context, userID string) (strin
 	op := "CreateLinkToken"
 
 	countryCodes := getCountryCodes()
-	redirectUri := os.Getenv(constants.PLAID_REDIRECT_URI)
+	// redirectUri := os.Getenv(constants.PLAID_REDIRECT_URI)
 	products := getPlaidProducts()
 
 	user := plaid.LinkTokenCreateRequestUser{
@@ -39,15 +47,15 @@ func (p *PlaidClient) CreateLinkToken(ctx context.Context, userID string) (strin
 	}
 
 	request := plaid.NewLinkTokenCreateRequest(
-		"App name",
+		constants.APP_NAME,
 		"en",
 		countryCodes,
 		user,
 	)
 
-	if redirectUri != "" {
-		request.SetRedirectUri(redirectUri)
-	}
+	// if redirectUri != "" {
+	// 	request.SetRedirectUri(redirectUri)
+	// }
 
 	request.SetProducts(products)
 
