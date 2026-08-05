@@ -5,6 +5,7 @@ import (
 	"budget_tracket/constants"
 	"budget_tracket/database/repository"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -38,14 +39,18 @@ func NewSyncService() (*SyncService, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var apiSecret string = *result.SecretString
+	var secretsManagerMap map[string]string
+	err = json.Unmarshal([]byte(*result.SecretString), &secretsManagerMap)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
 
 	plaidRepsitory, err := repository.NewPlaidRepository(os.Getenv(constants.PLAID_TABLE_NAME))
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	plaidClient := client.NewPlaidClient(apiSecret)
+	plaidClient := client.NewPlaidClient(secretsManagerMap[constants.PLAID_SECRET_KEY])
 
 	service := SyncService{
 		plaidClient:     plaidClient,

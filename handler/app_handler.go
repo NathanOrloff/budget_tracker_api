@@ -74,7 +74,7 @@ func (a *AppHandler) ListTransactionsSinceDate(c *gin.Context) {
 	op := "ListTransactionsSinceDate"
 	ctx := c.Request.Context()
 
-	fromDateInput := c.Param("from_date")
+	fromDateInput := c.Query("from_date")
 	fromDate, err := time.Parse("2006-01-02", fromDateInput)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
