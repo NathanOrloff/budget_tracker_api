@@ -81,7 +81,7 @@ func (s *SyncService) SyncTransactions(ctx context.Context) error {
 		}
 
 		if len(added) > 0 {
-			err = s.plaidRepository.BulkCreateTransactions(ctx, added)
+			err = s.plaidRepository.BulkCreateTransactions(ctx, added, &item.UserID)
 			if err != nil {
 				return fmt.Errorf("%s: %w", op, err)
 			}

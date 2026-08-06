@@ -34,7 +34,7 @@ func NewPlaidRepository(tableName string) (*PlaidRepository, error) {
 	return &repo, nil
 }
 
-func (plaidRepository *PlaidRepository) BulkCreateTransactions(ctx context.Context, transactions []models.Transaction) error {
+func (plaidRepository *PlaidRepository) BulkCreateTransactions(ctx context.Context, transactions []models.Transaction, userID *string) error {
 	op := "BulkCreateTransactions"
 	batchSize := 25 // DynamoDB max allowed batch size
 
@@ -47,6 +47,9 @@ func (plaidRepository *PlaidRepository) BulkCreateTransactions(ctx context.Conte
 		}
 		for _, transaction := range transactions[start:end] {
 			transaction.FillKey(ctx)
+			if userID != nil {
+				transaction.GSI1PK = "USER#" + *userID
+			}
 			transaction.CreatedAt = time.Now()
 			transaction.UpdatedAt = time.Now()
 			item, err := attributevalue.MarshalMap(transaction)
@@ -263,7 +266,7 @@ func (plaidRepository *PlaidRepository) CreateAccount(ctx context.Context, accou
 	}
 
 	if len(account.Transactions) > 0 {
-		err = plaidRepository.BulkCreateTransactions(ctx, account.Transactions)
+		err = plaidRepository.BulkCreateTransactions(ctx, account.Transactions, nil)
 		if err != nil {
 			return fmt.Errorf("%s: %w", op, err)
 		}

@@ -120,7 +120,6 @@ func (a *AppService) ListTransactionsSinceDate(ctx context.Context, fromDate tim
 	}
 
 	currentDate := time.Now()
-
 	dbTransactions, err := a.plaidRepository.ListTransactionsByUserID(ctx, userID, &fromDate, &currentDate)
 	if err != nil {
 		return []frontend.TransactionOutput{}, fmt.Errorf("%s: %w", op, err)
