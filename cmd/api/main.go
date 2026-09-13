@@ -22,6 +22,7 @@ func init() {
 	}
 
 	r := gin.Default()
+	r.Use(middleware.CorsMiddleware())
 	r.Use(middleware.AuthMiddleware())
 
 	r.GET("/create-link-token", handler.CreateLinkToken)
