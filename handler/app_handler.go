@@ -100,7 +100,7 @@ func (a *AppHandler) AccountIsRegistered(c *gin.Context) {
 	op := "AccountIsRegistered"
 	ctx := c.Request.Context()
 
-	isConnected, err := a.appService.AccountIsRegistered(ctx)
+	isRegistered, err := a.appService.AccountIsRegistered(ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": fmt.Errorf("%s: %w", op, err).Error(),
@@ -109,6 +109,6 @@ func (a *AppHandler) AccountIsRegistered(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"is_connected": isConnected,
+		"is_registered": isRegistered,
 	})
 }
