@@ -132,3 +132,22 @@ func (a *AppService) ListTransactionsSinceDate(ctx context.Context, fromDate tim
 
 	return transactions, nil
 }
+
+func (a *AppService) AccountIsRegistered(ctx context.Context) (bool, error) {
+	op := "AccountIsRegistered"
+
+	userID := utils.GetUIDFromCtx(ctx)
+	if userID == "" {
+		return false, fmt.Errorf("%s: Invalid userID", op)
+	}
+
+	items, err := a.plaidRepository.ListItemsByUserID(ctx, userID)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+
+	if len(items) == 0 {
+		return false, nil
+	}
+	return true, nil
+}

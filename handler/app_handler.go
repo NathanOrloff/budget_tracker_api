@@ -95,3 +95,20 @@ func (a *AppHandler) ListTransactionsSinceDate(c *gin.Context) {
 		"data": transactions,
 	})
 }
+
+func (a *AppHandler) AccountIsRegistered(c *gin.Context) {
+	op := "AccountIsRegistered"
+	ctx := c.Request.Context()
+
+	isConnected, err := a.appService.AccountIsRegistered(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Errorf("%s: %w", op, err).Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"is_connected": isConnected,
+	})
+}

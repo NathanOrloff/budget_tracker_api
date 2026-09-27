@@ -27,6 +27,7 @@ func init() {
 
 	r.GET("/create-link-token", handler.CreateLinkToken)
 	r.GET("/transactions", handler.ListTransactionsSinceDate)
+	r.GET("/account-is-registered", handler.AccountIsRegistered)
 
 	r.POST("/exchange-public-token", handler.ExchangePublicToken)
 
