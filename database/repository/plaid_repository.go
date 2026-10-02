@@ -227,7 +227,6 @@ func (plaidRepository *PlaidRepository) ListItemsByUserID(ctx context.Context, u
 	var items []models.Item
 	paginator := dynamodb.NewQueryPaginator(plaidRepository.Client, &dynamodb.QueryInput{
 		TableName:                 &plaidRepository.TableName,
-		IndexName:                 aws.String("PK"),
 		KeyConditionExpression:    expr.KeyCondition(),
 		FilterExpression:          expr.Filter(),
 		ExpressionAttributeNames:  expr.Names(),
