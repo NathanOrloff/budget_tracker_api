@@ -125,7 +125,7 @@ func (a *AppService) ListTransactionsSinceDate(ctx context.Context, fromDate tim
 		return []frontend.TransactionOutput{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-	var transactions []frontend.TransactionOutput
+	transactions := []frontend.TransactionOutput{}
 	for _, dbTransaction := range dbTransactions {
 		transactions = append(transactions, frontend.MarshalTransaction(dbTransaction))
 	}
