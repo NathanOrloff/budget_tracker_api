@@ -17,7 +17,10 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	handler.SyncTransactions(ctx)
+	err = handler.SyncTransactions(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
 
 	return nil
 }

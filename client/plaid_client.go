@@ -5,6 +5,7 @@ import (
 	"budget_tracket/database/models"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -61,6 +62,11 @@ func (p *PlaidClient) CreateLinkToken(ctx context.Context, userID string) (strin
 
 	resp, _, err := p.Client.PlaidApi.LinkTokenCreate(ctx).LinkTokenCreateRequest(*request).Execute()
 	if err != nil {
+		if plaidErr, convErr := plaid.ToPlaidError(err); convErr == nil {
+			log.Printf("plaid error: type=%s code=%s message=%s",
+				plaidErr.ErrorType, plaidErr.ErrorCode, plaidErr.ErrorMessage)
+			return "", fmt.Errorf("%s: plaid %s: %s", op, plaidErr.ErrorCode, plaidErr.ErrorMessage)
+		}
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -96,6 +102,11 @@ func (p *PlaidClient) SyncTransactions(ctx context.Context, accessToken string, 
 
 		resp, _, err := p.Client.PlaidApi.TransactionsSync(ctx).TransactionsSyncRequest(*request).Execute()
 		if err != nil {
+			if plaidErr, convErr := plaid.ToPlaidError(err); convErr == nil {
+				log.Printf("plaid error: type=%s code=%s message=%s",
+					plaidErr.ErrorType, plaidErr.ErrorCode, plaidErr.ErrorMessage)
+				return nil, nil, nil, nil, fmt.Errorf("%s: plaid %s: %s", op, plaidErr.ErrorCode, plaidErr.ErrorMessage)
+			}
 			return nil, nil, nil, nil, fmt.Errorf("%s: %w", op, err)
 		}
 
