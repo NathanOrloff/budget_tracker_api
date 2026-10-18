@@ -96,6 +96,23 @@ func (a *AppHandler) ListTransactionsSinceDate(c *gin.Context) {
 	})
 }
 
+func (a *AppHandler) GetMonthlyTransactionTotals(c *gin.Context) {
+	op := "GetMonthlyTransactionTotals"
+	ctx := c.Request.Context()
+
+	totals, err := a.appService.GetMonthlyTransactionTotals(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Errorf("%s: %w", op, err).Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": totals,
+	})
+}
+
 func (a *AppHandler) AccountIsRegistered(c *gin.Context) {
 	op := "AccountIsRegistered"
 	ctx := c.Request.Context()

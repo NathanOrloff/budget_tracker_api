@@ -133,6 +133,42 @@ func (a *AppService) ListTransactionsSinceDate(ctx context.Context, fromDate tim
 	return transactions, nil
 }
 
+func (a *AppService) GetMonthlyTransactionTotals(ctx context.Context) (frontend.TransactionTotalsOutput, error) {
+	op := "GetMonthlyTransactionTotals"
+
+	userID := utils.GetUIDFromCtx(ctx)
+	if userID == "" {
+		return frontend.TransactionTotalsOutput{}, fmt.Errorf("%s: Invalid userID", op)
+	}
+
+	currentDate := time.Now()
+	oneYearAgo := currentDate.AddDate(-1, 1, 0)
+	startOfMonth := time.Date(
+		oneYearAgo.Year(),  // Keep the target year
+		oneYearAgo.Month(), // Keep the target month
+		1,                  // Force day to 1
+		0, 0, 0, 0,         // Reset hours, mins, secs, nsecs to 0
+		oneYearAgo.Location(), // Retain the user's timezone context
+	)
+
+	dbTransactions, err := a.plaidRepository.ListTransactionsByUserID(ctx, userID, &startOfMonth, &currentDate)
+	if err != nil {
+		return frontend.TransactionTotalsOutput{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	totals := make(frontend.TransactionTotalsOutput)
+	for _, transaction := range dbTransactions {
+		if transaction.Amount < 0 {
+			continue
+		}
+
+		key := transaction.Date.Format("Jan-2006")
+		totals[key] = totals[key] + transaction.Amount
+	}
+
+	return totals, nil
+}
+
 func (a *AppService) AccountIsRegistered(ctx context.Context) (bool, error) {
 	op := "AccountIsRegistered"
 
