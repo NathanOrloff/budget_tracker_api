@@ -29,8 +29,10 @@ func init() {
 	r.GET("/transactions", handler.ListTransactionsSinceDate)
 	r.GET("/account-is-registered", handler.AccountIsRegistered)
 	r.GET("/transactions/totals-by-month", handler.GetMonthlyTransactionTotals)
+	r.GET("/budget", handler.GetBudget)
 
 	r.POST("/exchange-public-token", handler.ExchangePublicToken)
+	r.POST("/budget", handler.UpsertBudget)
 
 	ginLambda = ginadapter.New(r)
 }

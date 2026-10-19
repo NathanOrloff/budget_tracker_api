@@ -187,3 +187,59 @@ func (a *AppService) AccountIsRegistered(ctx context.Context) (bool, error) {
 	}
 	return true, nil
 }
+
+func (a *AppService) UpsertBudget(ctx context.Context, budget frontend.UpsertBudgetInput) error {
+	op := "UpsertBudget"
+
+	userID := utils.GetUIDFromCtx(ctx)
+	if userID == "" {
+		return fmt.Errorf("%s: Invalid userID", op)
+	}
+
+	dbBudget := models.Budget{
+		PK:         fmt.Sprintf("USER#%s", userID),
+		SK:         "BUDGET",
+		UserID:     userID,
+		Categories: []models.BudgetCategory{},
+	}
+
+	for _, category := range budget.Categories {
+		dbBudget.Categories = append(dbBudget.Categories, models.BudgetCategory{
+			PersonalFinanceCategory: category.PersonalFinanceCategory,
+			Amount:                  category.Amount,
+		})
+	}
+
+	err := a.plaidRepository.UpsertBudget(ctx, dbBudget)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (a *AppService) GetBudget(ctx context.Context) (frontend.GetBudgetOutput, error) {
+	op := "GetBudget"
+
+	userID := utils.GetUIDFromCtx(ctx)
+	if userID == "" {
+		return frontend.GetBudgetOutput{}, fmt.Errorf("%s: Invalid userID", op)
+	}
+
+	budget, err := a.plaidRepository.GetBudget(ctx, userID)
+	if err != nil {
+		return frontend.GetBudgetOutput{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	output := frontend.GetBudgetOutput{
+		Categories: []frontend.BudgetCategory{},
+	}
+	for _, category := range budget.Categories {
+		output.Categories = append(output.Categories, frontend.BudgetCategory{
+			PersonalFinanceCategory: category.PersonalFinanceCategory,
+			Amount:                  category.Amount,
+		})
+	}
+
+	return output, nil
+}

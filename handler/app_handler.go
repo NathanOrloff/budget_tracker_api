@@ -5,6 +5,7 @@ import (
 	"budget_tracket/service"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -127,5 +128,55 @@ func (a *AppHandler) AccountIsRegistered(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"is_registered": isRegistered,
+	})
+}
+
+func (a *AppHandler) UpsertBudget(c *gin.Context) {
+	op := "UpsertBudget"
+	ctx := c.Request.Context()
+
+	var input frontend.UpsertBudgetInput
+	err := c.ShouldBindJSON(&input)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": fmt.Errorf("%s: %w", op, err).Error(),
+		})
+		return
+	}
+
+	for _, category := range input.Categories {
+		if !slices.Contains(frontend.VALID_PERSONAL_FINANCE_CATEGORIES, category.PersonalFinanceCategory) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": fmt.Errorf("%s: Invalid input: %s", op, category.PersonalFinanceCategory).Error(),
+			})
+			return
+		}
+	}
+
+	err = a.appService.UpsertBudget(ctx, input)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Errorf("%s: %w", op, err).Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{})
+}
+
+func (a *AppHandler) GetBudget(c *gin.Context) {
+	op := "GetBudget"
+	ctx := c.Request.Context()
+
+	budget, err := a.appService.GetBudget(ctx)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Errorf("%s: %w", op, err).Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": budget,
 	})
 }

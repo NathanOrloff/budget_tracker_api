@@ -273,3 +273,50 @@ func (plaidRepository *PlaidRepository) CreateAccount(ctx context.Context, accou
 
 	return nil
 }
+
+func (plaidRepository *PlaidRepository) UpsertBudget(ctx context.Context, budget models.Budget) error {
+	op := "UpsertBudget"
+
+	item, err := attributevalue.MarshalMap(budget)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	_, err = plaidRepository.Client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(plaidRepository.TableName), Item: item,
+	})
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (plaidRepository *PlaidRepository) GetBudget(ctx context.Context, userID string) (models.Budget, error) {
+	op := "GetBudget"
+
+	key := map[string]types.AttributeValue{
+		"PK": &types.AttributeValueMemberS{
+			Value: fmt.Sprintf("USER#%s", userID),
+		},
+		"SK": &types.AttributeValueMemberS{
+			Value: "BUDGET",
+		},
+	}
+
+	budget, err := plaidRepository.Client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(plaidRepository.TableName),
+		Key:       key,
+	})
+	if err != nil {
+		return models.Budget{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	var dbBudget models.Budget
+	err = attributevalue.UnmarshalMap(budget.Item, &dbBudget)
+	if err != nil {
+		return models.Budget{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return dbBudget, nil
+}
